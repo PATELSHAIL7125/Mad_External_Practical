@@ -31,7 +31,12 @@ class ResumeListScreen extends StatelessWidget {
                       Text('Email: ${resume.email}'),
                     ],
                   ),
-                  trailing: const Icon(Icons.chevron_right),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                    onPressed: () {
+                      _showDeleteDialog(context, provider, resume.id);
+                    },
+                  ),
                   onTap: () {
                     Navigator.push(
                       context,
@@ -53,6 +58,26 @@ class ResumeListScreen extends StatelessWidget {
         },
         label: const Text('Create New'),
         icon: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  void _showDeleteDialog(BuildContext context, ResumeProvider provider, String id) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Resume?'),
+        content: const Text('This will permanently remove this resume profile.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () {
+              provider.deleteResume(id);
+              Navigator.pop(context);
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
       ),
     );
   }

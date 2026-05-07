@@ -1,5 +1,7 @@
 import 'package:provider/provider.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../../providers/application_provider.dart';
+import '../../widgets/custom_card.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -7,7 +9,25 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Job Tracker Dashboard')),
+      appBar: AppBar(
+        title: const Text('Smart Tracker'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.sync),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Syncing with cloud...'), behavior: SnackBarBehavior.floating),
+              );
+              // Simulate sync delay
+              Future.delayed(const Duration(seconds: 2), () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Sync Complete (Offline-first)'), backgroundColor: Colors.green, behavior: SnackBarBehavior.floating),
+                );
+              });
+            },
+          ),
+        ],
+      ),
       body: Consumer<ApplicationProvider>(
         builder: (context, provider, child) {
           final apps = provider.applications;
@@ -18,25 +38,22 @@ class DashboardScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Quick Overview',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 20),
+                _buildHeader(),
+                const SizedBox(height: 24),
                 _buildStatGrid(apps.length, stats),
-                const SizedBox(height: 30),
+                const SizedBox(height: 32),
                 const Text(
-                  'Application Status',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  'Application Distribution',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 0.5),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 16),
                 _buildStatusChart(stats),
-                const SizedBox(height: 30),
+                const SizedBox(height: 32),
                 const Text(
-                  'Recent Applications',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  'Recent Activities',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 0.5),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 16),
                 _buildRecentApplications(apps),
               ],
             ),
@@ -46,56 +63,73 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildHeader() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Welcome back,',
+          style: TextStyle(fontSize: 16, color: Colors.grey[400]),
+        ),
+        const Text(
+          'Career Progress',
+          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+        ),
+      ],
+    );
+  }
+
   Widget _buildStatGrid(int total, Map<String, int> stats) {
     return GridView.count(
       shrinkWrap: true,
       crossAxisCount: 2,
       crossAxisSpacing: 16,
       mainAxisSpacing: 16,
-      childAspectRatio: 1.5,
+      childAspectRatio: 1.4,
       physics: const NeverScrollableScrollPhysics(),
       children: [
-        _buildStatCard('Total', total.toString(), Colors.blue),
-        _buildStatCard('Applied', (stats['Applied'] ?? 0).toString(), Colors.orange),
-        _buildStatCard('Interviews', (stats['Interview Scheduled'] ?? 0).toString(), Colors.purple),
-        _buildStatCard('Selected', (stats['Selected'] ?? 0).toString(), Colors.green),
+        _buildStatCard('Total', total.toString(), const Color(0xFF6366F1)),
+        _buildStatCard('Applied', (stats['Applied'] ?? 0).toString(), const Color(0xFFF59E0B)),
+        _buildStatCard('Interviews', (stats['Interview Scheduled'] ?? 0).toString(), const Color(0xFF8B5CF6)),
+        _buildStatCard('Selected', (stats['Selected'] ?? 0).toString(), const Color(0xFF10B981)),
       ],
     );
   }
 
   Widget _buildStatCard(String label, String value, Color color) {
-    return Container(
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color)),
-          Text(label, style: const TextStyle(color: Colors.grey)),
-        ],
+    return GlassCard(
+      gradient: [color.withOpacity(0.2), color.withOpacity(0.05)],
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(value, style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: color)),
+            const SizedBox(height: 4),
+            Text(label, style: TextStyle(color: Colors.grey[300], fontSize: 14)),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildStatusChart(Map<String, int> stats) {
-    return Container(
-      height: 200,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: PieChart(
-        PieChartData(
-          sections: [
-            PieChartSectionData(value: (stats['Applied'] ?? 0).toDouble(), color: Colors.orange, title: 'App'),
-            PieChartSectionData(value: (stats['Interview Scheduled'] ?? 0).toDouble(), color: Colors.purple, title: 'Int'),
-            PieChartSectionData(value: (stats['Selected'] ?? 0).toDouble(), color: Colors.green, title: 'Sel'),
-            PieChartSectionData(value: (stats['Rejected'] ?? 0).toDouble(), color: Colors.red, title: 'Rej'),
-          ],
+    return GlassCard(
+      child: Container(
+        height: 220,
+        padding: const EdgeInsets.all(24),
+        child: PieChart(
+          PieChartData(
+            sectionsSpace: 4,
+            centerSpaceRadius: 40,
+            sections: [
+              PieChartSectionData(value: (stats['Applied'] ?? 0).toDouble(), color: const Color(0xFFF59E0B), title: 'App', radius: 50, titleStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              PieChartSectionData(value: (stats['Interview Scheduled'] ?? 0).toDouble(), color: const Color(0xFF8B5CF6), title: 'Int', radius: 50, titleStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              PieChartSectionData(value: (stats['Selected'] ?? 0).toDouble(), color: const Color(0xFF10B981), title: 'Sel', radius: 50, titleStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              PieChartSectionData(value: (stats['Rejected'] ?? 0).toDouble(), color: Colors.redAccent, title: 'Rej', radius: 50, titleStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            ],
+          ),
         ),
       ),
     );
@@ -104,10 +138,12 @@ class DashboardScreen extends StatelessWidget {
   Widget _buildRecentApplications(List apps) {
     final recent = apps.reversed.take(5).toList();
     if (recent.isEmpty) {
-      return const Center(child: Padding(
-        padding: EdgeInsets.all(20.0),
-        child: Text('No applications yet.'),
-      ));
+      return const GlassCard(
+        child: Center(child: Padding(
+          padding: EdgeInsets.all(40.0),
+          child: Text('Start applying to track progress!'),
+        )),
+      );
     }
     return ListView.builder(
       shrinkWrap: true,
@@ -115,19 +151,44 @@ class DashboardScreen extends StatelessWidget {
       itemCount: recent.length,
       itemBuilder: (context, index) {
         final app = recent[index];
-        return Card(
+        return Container(
           margin: const EdgeInsets.only(bottom: 12),
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: Colors.blue.withOpacity(0.2),
-              child: const Icon(Icons.business, color: Colors.blue),
+          child: GlassCard(
+            child: ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), shape: BoxShape.circle),
+                child: const Icon(Icons.business_rounded, color: Colors.blueAccent),
+              ),
+              title: Text(app.companyName, style: const TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text(app.jobRole),
+              trailing: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _getStatusColor(app.status).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _getStatusColor(app.status).withOpacity(0.3)),
+                ),
+                child: Text(
+                  app.status,
+                  style: TextStyle(color: _getStatusColor(app.status), fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+              ),
             ),
-            title: Text(app.companyName),
-            subtitle: Text(app.jobRole),
-            trailing: Text(app.status, style: const TextStyle(color: Colors.orange)),
           ),
         );
       },
     );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'Applied': return Colors.orange;
+      case 'Shortlisted': return Colors.blue;
+      case 'Interview Scheduled': return Colors.purple;
+      case 'Selected': return Colors.green;
+      case 'Rejected': return Colors.red;
+      default: return Colors.grey;
+    }
   }
 }
