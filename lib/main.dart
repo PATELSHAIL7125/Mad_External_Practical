@@ -1,0 +1,67 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'core/app_theme.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter();
+  
+  runApp(
+    MultiProvider(
+      providers: [
+        // Providers will be added here in Phase 3
+      ],
+      child: const SmartResumeApp(),
+    ),
+  );
+}
+
+class SmartResumeApp extends StatelessWidget {
+  const SmartResumeApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Smart Resume Tracker',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.darkTheme,
+      home: const MainNavigation(),
+    );
+  }
+}
+
+class MainNavigation extends StatefulWidget {
+  const MainNavigation({super.key});
+
+  @override
+  State<MainNavigation> createState() => _MainNavigationState();
+}
+
+class _MainNavigationState extends State<MainNavigation> {
+  int _selectedIndex = 0;
+
+  final List<Widget> _screens = [
+    const Center(child: Text('Dashboard Placeholder')),
+    const Center(child: Text('Resumes Placeholder')),
+    const Center(child: Text('Applications Placeholder')),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: _screens[_selectedIndex],
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: (index) {
+          setState(() => _selectedIndex = index);
+        },
+        destinations: const [
+          NavigationDestination(icon: Icon(Icons.dashboard), label: 'Dashboard'),
+          NavigationDestination(icon: Icon(Icons.description), label: 'Resumes'),
+          NavigationDestination(icon: Icon(Icons.work), label: 'Jobs'),
+        ],
+      ),
+    );
+  }
+}
