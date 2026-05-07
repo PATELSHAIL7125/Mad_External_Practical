@@ -9,14 +9,24 @@ import 'screens/application/search_filter_screen.dart';
 import 'screens/application/application_entry_screen.dart';
 import 'screens/resume/resume_builder_screen.dart';
 
+import 'providers/resume_provider.dart';
+import 'providers/application_provider.dart';
+import 'models/resume_model.dart';
+import 'models/job_application_model.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   
+  // Register Adapters
+  Hive.registerAdapter(ResumeModelAdapter());
+  Hive.registerAdapter(JobApplicationModelAdapter());
+  
   runApp(
     MultiProvider(
       providers: [
-        // Providers will be added here in Phase 3
+        ChangeNotifierProvider(create: (_) => ResumeProvider()),
+        ChangeNotifierProvider(create: (_) => ApplicationProvider()),
       ],
       child: const SmartResumeApp(),
     ),

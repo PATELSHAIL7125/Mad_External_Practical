@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
+import 'package:provider/provider.dart';
+import '../../providers/application_provider.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -8,38 +8,45 @@ class DashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Job Tracker Dashboard')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Quick Overview',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+      body: Consumer<ApplicationProvider>(
+        builder: (context, provider, child) {
+          final apps = provider.applications;
+          final stats = provider.getStatusDistribution();
+          
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Quick Overview',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 20),
+                _buildStatGrid(apps.length, stats),
+                const SizedBox(height: 30),
+                const Text(
+                  'Application Status',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                _buildStatusChart(stats),
+                const SizedBox(height: 30),
+                const Text(
+                  'Recent Applications',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                _buildRecentApplications(apps),
+              ],
             ),
-            const SizedBox(height: 20),
-            _buildStatGrid(),
-            const SizedBox(height: 30),
-            const Text(
-              'Application Status',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            _buildStatusChart(),
-            const SizedBox(height: 30),
-            const Text(
-              'Recent Applications',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            _buildRecentApplications(),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildStatGrid() {
+  Widget _buildStatGrid(int total, Map<String, int> stats) {
     return GridView.count(
       shrinkWrap: true,
       crossAxisCount: 2,
@@ -48,10 +55,10 @@ class DashboardScreen extends StatelessWidget {
       childAspectRatio: 1.5,
       physics: const NeverScrollableScrollPhysics(),
       children: [
-        _buildStatCard('Total', '0', Colors.blue),
-        _buildStatCard('Applied', '0', Colors.orange),
-        _buildStatCard('Interviews', '0', Colors.purple),
-        _buildStatCard('Selected', '0', Colors.green),
+        _buildStatCard('Total', total.toString(), Colors.blue),
+        _buildStatCard('Applied', (stats['Applied'] ?? 0).toString(), Colors.orange),
+        _buildStatCard('Interviews', (stats['Interview Scheduled'] ?? 0).toString(), Colors.purple),
+        _buildStatCard('Selected', (stats['Selected'] ?? 0).toString(), Colors.green),
       ],
     );
   }
@@ -73,7 +80,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusChart() {
+  Widget _buildStatusChart(Map<String, int> stats) {
     return Container(
       height: 200,
       padding: const EdgeInsets.all(16),
@@ -84,22 +91,30 @@ class DashboardScreen extends StatelessWidget {
       child: PieChart(
         PieChartData(
           sections: [
-            PieChartSectionData(value: 40, color: Colors.blue, title: 'Applied'),
-            PieChartSectionData(value: 30, color: Colors.purple, title: 'Interview'),
-            PieChartSectionData(value: 15, color: Colors.green, title: 'Selected'),
-            PieChartSectionData(value: 15, color: Colors.red, title: 'Rejected'),
+            PieChartSectionData(value: (stats['Applied'] ?? 0).toDouble(), color: Colors.orange, title: 'App'),
+            PieChartSectionData(value: (stats['Interview Scheduled'] ?? 0).toDouble(), color: Colors.purple, title: 'Int'),
+            PieChartSectionData(value: (stats['Selected'] ?? 0).toDouble(), color: Colors.green, title: 'Sel'),
+            PieChartSectionData(value: (stats['Rejected'] ?? 0).toDouble(), color: Colors.red, title: 'Rej'),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildRecentApplications() {
+  Widget _buildRecentApplications(List apps) {
+    final recent = apps.reversed.take(5).toList();
+    if (recent.isEmpty) {
+      return const Center(child: Padding(
+        padding: EdgeInsets.all(20.0),
+        child: Text('No applications yet.'),
+      ));
+    }
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: 3,
+      itemCount: recent.length,
       itemBuilder: (context, index) {
+        final app = recent[index];
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
@@ -107,9 +122,9 @@ class DashboardScreen extends StatelessWidget {
               backgroundColor: Colors.blue.withOpacity(0.2),
               child: const Icon(Icons.business, color: Colors.blue),
             ),
-            title: const Text('Company Name'),
-            subtitle: const Text('Software Engineer'),
-            trailing: const Text('Applied', style: TextStyle(color: Colors.orange)),
+            title: Text(app.companyName),
+            subtitle: Text(app.jobRole),
+            trailing: Text(app.status, style: const TextStyle(color: Colors.orange)),
           ),
         );
       },
