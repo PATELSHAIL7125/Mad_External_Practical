@@ -3,6 +3,12 @@ import 'package:provider/provider.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'core/app_theme.dart';
 
+import 'screens/dashboard/dashboard_screen.dart';
+import 'screens/resume/resume_list_screen.dart';
+import 'screens/application/search_filter_screen.dart';
+import 'screens/application/application_entry_screen.dart';
+import 'screens/resume/resume_builder_screen.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
@@ -42,9 +48,9 @@ class _MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 0;
 
   final List<Widget> _screens = [
-    const Center(child: Text('Dashboard Placeholder')),
-    const Center(child: Text('Resumes Placeholder')),
-    const Center(child: Text('Applications Placeholder')),
+    const DashboardScreen(),
+    const ResumeListScreen(),
+    const SearchFilterScreen(),
   ];
 
   @override
@@ -57,11 +63,22 @@ class _MainNavigationState extends State<MainNavigation> {
           setState(() => _selectedIndex = index);
         },
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.dashboard), label: 'Dashboard'),
-          NavigationDestination(icon: Icon(Icons.description), label: 'Resumes'),
-          NavigationDestination(icon: Icon(Icons.work), label: 'Jobs'),
+          NavigationDestination(icon: Icon(Icons.dashboard_rounded), label: 'Dashboard'),
+          NavigationDestination(icon: Icon(Icons.description_rounded), label: 'Resumes'),
+          NavigationDestination(icon: Icon(Icons.work_rounded), label: 'Applications'),
         ],
       ),
+      floatingActionButton: _selectedIndex == 2 
+        ? FloatingActionButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ApplicationEntryScreen()),
+              );
+            },
+            child: const Icon(Icons.add),
+          )
+        : null,
     );
   }
 }
